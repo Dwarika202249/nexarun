@@ -7,7 +7,6 @@ export class AudioManager {
   private master!: GainNode;
   private bgmGain!: GainNode;
   private sfxGain!: GainNode;
-  private bgmOscs: OscillatorNode[] = [];
   private arpTimer: number | null = null;
   private ready = false;
 
@@ -221,22 +220,5 @@ export class AudioManager {
   private env(g: GainNode, peak: number, dur: number, t: number): void {
     g.gain.setValueAtTime(peak, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  }
-
-  private bgmOsc(type: OscillatorType, freq: number, filterFreq: number, vol: number) {
-    const o = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    const f = this.ctx.createBiquadFilter();
-    o.type = type;
-    o.frequency.value = freq;
-    f.type = 'lowpass';
-    f.frequency.value = filterFreq;
-    o.connect(f);
-    f.connect(g);
-    g.connect(this.bgmGain);
-    g.gain.value = vol;
-    o.start();
-    this.bgmOscs.push(o);
-    return { osc: o, gain: g, filter: f };
   }
 }
