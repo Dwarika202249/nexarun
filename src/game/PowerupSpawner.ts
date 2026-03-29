@@ -30,7 +30,7 @@ export class PowerupSpawner {
     this.mats.SCORE2X.diffuseColor = new Color3(1, 0, 1);
   }
 
-  update(dt: number, currentZ: number, shouldTrySpawn: boolean): void {
+  update(dt: number, currentZ: number, shouldTrySpawn: boolean): boolean {
     // Move slightly
     for (const p of this.activePowerups) {
       if (p.active) {
@@ -49,8 +49,10 @@ export class PowerupSpawner {
     }
 
     if (shouldTrySpawn && Math.random() < GAME.POWERUP_SPAWN_CHANCE) {
-      this.spawn(currentZ + GAME.VISIBLE_TILES * GAME.TILE_LENGTH);
+      this.spawn(currentZ + GAME.SPAWN_DISTANCE);
+      return true;
     }
+    return false;
   }
 
   private spawn(zPos: number): void {
@@ -70,7 +72,9 @@ export class PowerupSpawner {
     } else if (type === 'SHIELD') {
       mesh = MeshBuilder.CreateSphere('pu_shield', { diameter: 1.5 }, this.scene);
     } else {
-      mesh = MeshBuilder.CreatePolyhedron('pu_x2', { type: 1, size: 0.8 }, this.scene);
+      // Hexagonal prism for 2X multiplier (safe from Polyhedra payload requirements)
+      mesh = MeshBuilder.CreateCylinder('pu_x2', { height: 1.2, diameter: 1.2, tessellation: 6 }, this.scene);
+      mesh.rotation.x = Math.PI / 2; // Flat face forward
     }
 
     mesh.position.set(xPos, GAME.GROUND_Y + 1.5, zPos);

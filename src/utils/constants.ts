@@ -16,10 +16,10 @@ export const GAME = {
   VISIBLE_TILES: 6,
 
   // Speed (Subway Surfer dynamic pace)
-  INITIAL_SPEED: 18,
-  MAX_SPEED: 45,
-  SPEED_INCREMENT: 1.0,
-  SPEED_RAMP_DISTANCE: 400,
+  INITIAL_SPEED: 28,
+  MAX_SPEED: 65,
+  SPEED_INCREMENT: 1.5,
+  SPEED_RAMP_DISTANCE: 250,
 
   // Physics (manual)
   GRAVITY: -35,
@@ -47,7 +47,7 @@ export const GAME = {
   COIN_RADIUS: 0.8,
   
   // Power-ups
-  POWERUP_SPAWN_CHANCE: 0.15, // 15% chance to spawn instead of a coin cluster
+  POWERUP_SPAWN_CHANCE: 0.20, // 20% chance to spawn instead of a coin cluster
   POWERUP_DURATION: 10, // seconds
   MAGNET_RADIUS: 10,
 

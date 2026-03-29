@@ -98,59 +98,105 @@ export class AudioManager {
     });
   }
 
-  // ─── BGM — Procedural Cyberpunk ───
+  // ─── BGM — Fast Paced Cyberpunk Action ───
 
   startBGM(): void {
     if (!this.ready) return;
     this.stopBGM();
 
-    // Bass drone
-    const bass = this.bgmOsc('sawtooth', 55, 200, 0.12);
-    // Sub pad
-    this.bgmOsc('triangle', 110, 400, 0.06);
-    // Higher pad layer
-    this.bgmOsc('sine', 220, 600, 0.04);
+    // Fast-paced BPM calculations (145 BPM)
+    const bps = 145 / 60;
+    const stepTime = (1 / bps) / 4; // 16th notes (~103ms)
+    const stepMs = Math.floor(stepTime * 1000);
 
-    // Slow LFO on bass filter
-    const lfo = this.ctx.createOscillator();
-    const lfoGain = this.ctx.createGain();
-    lfo.frequency.value = 0.15;
-    lfoGain.gain.value = 100;
-    lfo.connect(lfoGain);
-    lfoGain.connect(bass.filter.frequency);
-    lfo.start();
-    this.bgmOscs.push(lfo);
+    const bassScale = [110, 110, 220, 110, 146.8, 110, 164.8, 110];
+    const arpScale = [440, 523.25, 659.25, 880, 783.99, 659.25, 523.25, 392];
+    let step = 0;
 
-    // Arpeggiated synth notes
-    const scale = [220, 261.6, 329.6, 392, 440, 523.3, 440, 392];
-    let idx = 0;
     this.arpTimer = window.setInterval(() => {
       if (!this.ready) return;
       const t = this.ctx.currentTime;
-      const o = this.ctx.createOscillator();
-      const g = this.ctx.createGain();
-      const f = this.ctx.createBiquadFilter();
-      o.type = 'square';
-      o.frequency.value = scale[idx % scale.length];
-      f.type = 'lowpass';
-      f.frequency.value = 1200 + Math.sin(idx * 0.3) * 400;
-      f.Q.value = 5;
-      o.connect(f);
-      f.connect(g);
-      g.connect(this.bgmGain);
-      g.gain.setValueAtTime(0.05, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-      o.start(t);
-      o.stop(t + 0.22);
-      idx++;
-    }, 220);
+      
+      // -- KICK (4-on-the-floor) --
+      if (step % 4 === 0) {
+        const kick = this.ctx.createOscillator();
+        const kGain = this.ctx.createGain();
+        kick.type = 'sine';
+        kick.connect(kGain);
+        kGain.connect(this.bgmGain);
+        
+        kick.frequency.setValueAtTime(150, t);
+        kick.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+        kGain.gain.setValueAtTime(0.6, t);
+        kGain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+        
+        kick.start(t);
+        kick.stop(t + 0.2);
+      }
+
+      // -- HI-HAT (Off-beats) --
+      if (step % 2 !== 0) {
+        const hat = this.ctx.createOscillator();
+        const hGain = this.ctx.createGain();
+        const hFilter = this.ctx.createBiquadFilter();
+        hat.type = 'square';
+        hFilter.type = 'highpass';
+        hFilter.frequency.value = 8000;
+        
+        hat.connect(hFilter);
+        hFilter.connect(hGain);
+        hGain.connect(this.bgmGain);
+        
+        hGain.gain.setValueAtTime(0.1, t);
+        hGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        
+        hat.start(t);
+        hat.stop(t + 0.05);
+      }
+
+      // -- BASSLINE (Synthesized bounce) --
+      const bassFreq = bassScale[step % bassScale.length];
+      const bassOsc = this.ctx.createOscillator();
+      const bassGain = this.ctx.createGain();
+      const bassFilter = this.ctx.createBiquadFilter();
+      bassOsc.type = 'sawtooth';
+      bassFilter.type = 'lowpass';
+      bassFilter.frequency.setValueAtTime(300, t);
+      bassFilter.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+      
+      bassOsc.connect(bassFilter);
+      bassFilter.connect(bassGain);
+      bassGain.connect(this.bgmGain);
+      
+      bassOsc.frequency.value = bassFreq;
+      bassGain.gain.setValueAtTime(0.3, t);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+      
+      bassOsc.start(t);
+      bassOsc.stop(t + 0.15);
+
+      // -- SYNTH LEAD (Arpeggio) --
+      if (step % 2 === 0) {
+        const lead = this.ctx.createOscillator();
+        const leadGain = this.ctx.createGain();
+        lead.type = 'square';
+        lead.frequency.value = arpScale[(step / 2) % arpScale.length];
+        
+        lead.connect(leadGain);
+        leadGain.connect(this.bgmGain);
+        
+        leadGain.gain.setValueAtTime(0.08, t);
+        leadGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        
+        lead.start(t);
+        lead.stop(t + 0.1);
+      }
+
+      step++;
+    }, stepMs);
   }
 
   stopBGM(): void {
-    for (const o of this.bgmOscs) {
-      try { o.stop(); } catch { /* already stopped */ }
-    }
-    this.bgmOscs = [];
     if (this.arpTimer !== null) {
       clearInterval(this.arpTimer);
       this.arpTimer = null;

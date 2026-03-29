@@ -28,13 +28,17 @@ export class CoinSpawner {
     }, GAME.COIN_POOL_SIZE);
   }
 
-  shouldSpawn(): boolean {
-    return this.timer >= GAME.COIN_SPAWN_INTERVAL;
+  canSpawnThisFrame(dt: number): boolean {
+    return (this.timer + dt) >= GAME.COIN_SPAWN_INTERVAL;
+  }
+
+  resetTimer(): void {
+    this.timer = 0;
   }
 
   update(dt: number, runnerZ: number): void {
     this.timer += dt;
-    if (this.shouldSpawn()) {
+    if (this.timer >= GAME.COIN_SPAWN_INTERVAL) {
       this.spawnPattern(runnerZ + GAME.SPAWN_DISTANCE);
       this.timer = 0;
     }

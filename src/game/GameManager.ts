@@ -201,10 +201,17 @@ export class GameManager {
     this.track.update(this.runner.mesh.position.z);
     this.obstacles.update(dt, this.runner.mesh.position.z, this.score.speed);
     
-    // Instead of spawning coins randomly, chance to spawn powerup
-    const shouldSpawnCoin = this.coins.shouldSpawn();
-    this.powerups.update(dt, this.runner.mesh.position.z, shouldSpawnCoin);
-    if (!shouldSpawnCoin) this.coins.update(dt, this.runner.mesh.position.z); // proceed normally if didn't try to spawn powerup
+    // Handle Power-ups vs Coins spawning
+    const canSpawn = this.coins.canSpawnThisFrame(dt);
+    const powerupSpawned = this.powerups.update(dt, this.runner.mesh.position.z, canSpawn);
+    
+    // If a power-up was spawned, we reset the coin timer so they don't spawn in the same spot
+    if (powerupSpawned) {
+      this.coins.resetTimer();
+    }
+    
+    // Always update coins for rotation and cleanup (and spawning if no powerup took the slot)
+    this.coins.update(dt, this.runner.mesh.position.z);
     
     this.env.update(this.runner.mesh.position.z);
 
